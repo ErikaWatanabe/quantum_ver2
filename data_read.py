@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 5 # カーディナリティ制約
+Cardi = 100 # カーディナリティ制約
 
 
 
@@ -60,6 +60,10 @@ for date_str in time_point: # 日付を扱いやすいように辞書型に変�
 # 3. 3. 月初と月末の株価を2146銘柄分取得、csvファイルに保存
 # 時間計測
 import time
+import os
+folder_path = f"Cardinality_{Cardi}"
+os.makedirs(folder_path, exist_ok=True)
+print(f"フォルダ '{folder_path}' が作成されました。")
 start_time = time.time()
 
 
@@ -84,7 +88,7 @@ for key in monthly_data.keys():
         # 銘柄コードはcode_2146[i]
     # print(key, "の株価 : ", data_close_first[key], data_close_last[key])
     
-with open ("data_first.csv", "w", newline='') as f:
+with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
     for i in range(Cardi):
@@ -93,7 +97,7 @@ with open ("data_first.csv", "w", newline='') as f:
             data_csv.append(data_close_first[key][i])
         writer.writerow(data_csv)
 
-with open ("data_last.csv", "w", newline='') as f:
+with open (f"Cardinality_{Cardi}/data_last_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
     for i in range(Cardi):
@@ -131,67 +135,15 @@ for key in monthly_data.keys():
     topix_first.append(df_topix.loc[df_topix['Date'] == date_first, 'Close'].values[0])
     topix_last.append(df_topix.loc[df_topix['Date'] == date_last, 'Close'].values[0])
 
-with open ("topix_first.csv", "w", newline='') as f:
+with open (f"Cardinality_{Cardi}/topix_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
     writer.writerow(topix_first)
 
-with open ("topix_last.csv", "w", newline='') as f:
+with open (f"Cardinality_{Cardi}/topix_last_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
     writer.writerow(topix_last)
     
 
 
-
-
-
-# 4. 量子アニーリングで組み入れ銘柄決定
-# 4. 1. 目的関数の生成
-# object_f = 0
-# over_return = []
-
-# # 4. 2. 超過リターンの計算
-# import numpy as np
-# import math
-# for key in monthly_data.keys():
-#     topix_return = (np.array(topix_last[key]) - np.array(topix_first[key])) / np.array(topix_first[key])
-#     portpholio_return = 0
-#     for i in range(Cardi):
-#         # ここで二値変数q[i]をかける！
-#         portpholio_return = portpholio_return + (data_close_last[key][i] - data_close_first[key][i]) * q[i] / data_close_first[key][i]
-#     over_return.append(portpholio_return - topix_return)
-
-# over_return_ave = np.mean(over_return)
-# # print(over_return_ave)
-
-# mult = 0
-# for i in range(len(over_return)):
-#     mult = mult + (over_return[i] - over_return_ave) ** 2
-# f = mult[0]
-# print(f)
-
-# # object_f = math.sqrt(mult / (Cardi - 1))
-# # print(object_f)
-
-# # 目的関数にルート入れるとバグる、分散の最小化でもいいのかしら
-
-
-
-# from amplify import FixstarsClient
-# client = FixstarsClient()
-# client.token = "AE/VfQDHqAtq9NOTUnJyxWiDTSGa7avMJQe" 
-# client.parameters.timeout = 1000
-# from amplify import solve
-# result = solve(f, client)
-
-# print(result.best.values)
-# print(result.best.objective)
-# print(f"{q} = {q.evaluate(result.best.values)}")
-# print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
-
-
-# # 実行時間表示
-# end_time = time.time()
-# execution_time = end_time - start_time
-# print(f"実行時間: {execution_time}秒")

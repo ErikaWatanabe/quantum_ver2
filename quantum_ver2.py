@@ -1,3 +1,4 @@
+# データ取得とアニーリングが一緒の初代版
 
 # 1. 変数の初期設定等
 from amplify import VariableGenerator

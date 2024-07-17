@@ -1,9 +1,8 @@
 
 # 1. 変数の初期設定等
-from amplify import VariableGenerator
-gen = VariableGenerator()
-q = gen.array("Binary", 2146) # 二値変数
 Cardi = 100 # カーディナリティ制約
+import time
+start_time = time.time()
 
 
 
@@ -39,8 +38,8 @@ headers = {'Authorization': 'Bearer {}'.format(idToken)}
 
 # 3. 2. time_pointを先に取得
 time_point = []
-from_ = "2022-04-21" # 取得できる期間変わるので定期的に更新しないと
-to_ = "2023-03-21"
+from_ = "2022-05-21" # 取得できる期間変わるので定期的に更新しないと
+to_ = "2023-04-21"
 code_ = "7203"
 url = "https://api.jquants.com/v1/prices/daily_quotes"
 res = requests.get(f"{url}?code={code_}&from={from_}&to={to_}", headers=headers)
@@ -62,19 +61,57 @@ for date_str in time_point: # 日付を扱いやすいように辞書型に変�
 
 # 4. 量子アニーリングで組み入れ銘柄決定
 # 4. 1. 目的関数の生成
+from amplify import VariableGenerator
+gen = VariableGenerator()
+q = gen.array("Binary", 2146) # 二値変数
 object_f = 0
 over_return = []
 
-# 4. 2. 超過リターンの計算
+
+# 4. 2. CSVファイルからデータ読み込み
 import numpy as np
+
+topix_first = []
+with open(f"Cardinality_{Cardi}/topix_first_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        topix_first.append(row)
+topix_first_np = np.array(topix_first[1:], dtype=float)
+
+topix_last = []
+with open(f"Cardinality_{Cardi}/topix_last_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        topix_last.append(row)
+topix_last_np = np.array(topix_last[1:], dtype=float)
+
+portfolio_first = []
+with open(f"Cardinality_{Cardi}/data_first_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        portfolio_first.append(row)
+portfolio_first_np = np.array(portfolio_first[1:], dtype=float)
+
+portfolio_last = []
+with open(f"Cardinality_{Cardi}/data_last_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        portfolio_last.append(row)
+portfolio_last_np = np.array(portfolio_last[1:], dtype=float)
+
+
+
+# 4. 2. 超過リターンの計算
 import math
-for key in monthly_data.keys():
-    topix_return = (np.array(topix_last[key]) - np.array(topix_first[key])) / np.array(topix_first[key])
-    portpholio_return = 0
-    for i in range(Cardi):
+for i in range(12):
+    # topix_return = (np.array(topix_last[1][i]) - np.array(topix_first[1][i])) / np.array(topix_first[1][i])
+    topix_return = (topix_last_np[0][i] - topix_first_np[0][i]) / topix_first_np[0][i]
+    portfolio_return = 0
+    for j in range(Cardi):
         # ここで二値変数q[i]をかける！
-        portpholio_return = portpholio_return + (data_close_last[key][i] - data_close_first[key][i]) * q[i] / data_close_first[key][i]
-    over_return.append(portpholio_return - topix_return)
+        # print("i :", i, ", j :",j)
+        portfolio_return = portfolio_return + (portfolio_last_np[j][i] - portfolio_first_np[j][i]) * q[j] / portfolio_first_np[j][i]
+    over_return.append(portfolio_return - topix_return)
 
 over_return_ave = np.mean(over_return)
 # print(over_return_ave)
@@ -82,8 +119,7 @@ over_return_ave = np.mean(over_return)
 mult = 0
 for i in range(len(over_return)):
     mult = mult + (over_return[i] - over_return_ave) ** 2
-f = mult[0]
-print(f)
+f = mult
 
 # object_f = math.sqrt(mult / (Cardi - 1))
 # print(object_f)
@@ -100,7 +136,7 @@ from amplify import solve
 result = solve(f, client)
 
 print(result.best.values)
-print(result.best.objective)
+# print(result.best.objective)
 print(f"{q} = {q.evaluate(result.best.values)}")
 print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 
