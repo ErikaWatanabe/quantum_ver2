@@ -70,6 +70,7 @@ over_return = []
 
 # 4. 2. CSVファイルからデータ読み込み
 import numpy as np
+real_cardi = -1 # 銘柄コード除外した分の個数
 
 topix_first = []
 with open(f"Cardinality_{Cardi}/topix_first_{Cardi}.csv", mode='r', encoding='utf-8') as file:
@@ -90,6 +91,7 @@ with open(f"Cardinality_{Cardi}/data_first_{Cardi}.csv", mode='r', encoding='utf
     csv_reader = csv.reader(file)
     for row in csv_reader:
         portfolio_first.append(row)
+        real_cardi = real_cardi + 1
 portfolio_first_np = np.array(portfolio_first[1:], dtype=float)
 
 portfolio_last = []
@@ -107,7 +109,7 @@ for i in range(12):
     # topix_return = (np.array(topix_last[1][i]) - np.array(topix_first[1][i])) / np.array(topix_first[1][i])
     topix_return = (topix_last_np[0][i] - topix_first_np[0][i]) / topix_first_np[0][i]
     portfolio_return = 0
-    for j in range(Cardi):
+    for j in range(real_cardi):
         # ここで二値変数q[i]をかける！
         # print("i :", i, ", j :",j)
         portfolio_return = portfolio_return + (portfolio_last_np[j][i] - portfolio_first_np[j][i]) * q[j] / portfolio_first_np[j][i]

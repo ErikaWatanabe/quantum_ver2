@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 100 # カーディナリティ制約
+Cardi = 200 # カーディナリティ制約
 
 
 
@@ -66,7 +66,7 @@ os.makedirs(folder_path, exist_ok=True)
 print(f"フォルダ '{folder_path}' が作成されました。")
 start_time = time.time()
 
-
+count = 0
 month_key_list = []
 data_close_first = defaultdict(list) # 月初の全銘柄の株価を、月をkeyとして格納
 data_close_last = defaultdict(list) # 月末の全銘柄の株価を、月をkeyとして格納
@@ -76,22 +76,42 @@ for key in monthly_data.keys():
     date_first = monthly_data[key][0]
     date_last = monthly_data[key][-1] 
     month_key_list.append(key)   
+    print(key)
+    print(count)
+    # print(next(iter(monthly_data)))
 
     for i in range(Cardi):
-    # for i in range(len(code_2146)):
         res_first = requests.get(f"{url}?code={code_2146[i]}&date={date_first}", headers=headers)
         res_last = requests.get(f"{url}?code={code_2146[i]}&date={date_last}", headers=headers)
         data_first = res_first.json()
         data_last = res_last.json()
+        
+        if not data_first["daily_quotes"]: # Jquantsに銘柄コードがない時の例外処理
+            if key == next(iter(monthly_data)):
+                print(code_2146[i], "はありません、最初なので銘柄コードのみ削除します")
+            else:
+                print(code_2146[i], "はありません、2ヶ月目以降なのでデータも削除します")
+                for key_past in monthly_data.keys(): #これまでのkeyのデータ削除
+                    if(key == key_past):
+                        break
+                    else:
+                        data_close_first[key_past].pop(i-1)
+                        data_close_last[key_past].pop(i-1)
+            code_2146.pop(i)
+            i = i-1
+            count = count + 1
+            continue
+
         data_close_first[key].append(data_first["daily_quotes"][0]["Close"])
         data_close_last[key].append(data_last["daily_quotes"][0]["Close"])
-        # 銘柄コードはcode_2146[i]
+    
+        
     # print(key, "の株価 : ", data_close_first[key], data_close_last[key])
     
 with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
-    for i in range(Cardi):
+    for i in range(Cardi - count):
         data_csv = []
         for key in monthly_data.keys():
             data_csv.append(data_close_first[key][i])
@@ -100,7 +120,7 @@ with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
 with open (f"Cardinality_{Cardi}/data_last_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
-    for i in range(Cardi):
+    for i in range(Cardi - count):
         data_csv = []
         for key in monthly_data.keys():
             data_csv.append(data_close_last[key][i])
@@ -147,3 +167,7 @@ with open (f"Cardinality_{Cardi}/topix_last_{Cardi}.csv", "w", newline='') as f:
     
 
 
+# 実行時間表示
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"実行時間: {execution_time}秒")
