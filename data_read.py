@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 200 # カーディナリティ制約
+Cardi = 500 # カーディナリティ制約
 
 
 

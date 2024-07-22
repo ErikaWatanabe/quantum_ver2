@@ -1,7 +1,8 @@
-# 制約条件なし
+# 制約条件つき
 
 # 1. 変数の初期設定等
-Cardi = 500 # カーディナリティ制約
+data_num = 100 # 読み込むデータの数
+Cardi_want = 2 # カーディナリティ制約
 import time
 start_time = time.time()
 
@@ -61,42 +62,34 @@ for date_str in time_point: # 日付を扱いやすいように辞書型に変�
 
 
 # 4. 量子アニーリングで組み入れ銘柄決定
-# 4. 1. 目的関数の生成
-from amplify import VariableGenerator
-gen = VariableGenerator()
-q = gen.array("Binary", 2146) # 二値変数
-object_f = 0
-over_return = []
-
-
 # 4. 2. CSVファイルからデータ読み込み
 import numpy as np
-real_cardi = -1 # 銘柄コード除外した分の個数
+real_data_num = -1 # 銘柄コード除外した分の個数
 
 topix_first = []
-with open(f"Cardinality_{Cardi}/topix_first_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+with open(f"Cardinality_{data_num}/topix_first_{data_num}.csv", mode='r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     for row in csv_reader:
         topix_first.append(row)
 topix_first_np = np.array(topix_first[1:], dtype=float)
 
 topix_last = []
-with open(f"Cardinality_{Cardi}/topix_last_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+with open(f"Cardinality_{data_num}/topix_last_{data_num}.csv", mode='r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     for row in csv_reader:
         topix_last.append(row)
 topix_last_np = np.array(topix_last[1:], dtype=float)
 
 portfolio_first = []
-with open(f"Cardinality_{Cardi}/data_first_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+with open(f"Cardinality_{data_num}/data_first_{data_num}.csv", mode='r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     for row in csv_reader:
         portfolio_first.append(row)
-        real_cardi = real_cardi + 1
+        real_data_num = real_data_num + 1
 portfolio_first_np = np.array(portfolio_first[1:], dtype=float)
 
 portfolio_last = []
-with open(f"Cardinality_{Cardi}/data_last_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+with open(f"Cardinality_{data_num}/data_last_{data_num}.csv", mode='r', encoding='utf-8') as file:
     csv_reader = csv.reader(file)
     for row in csv_reader:
         portfolio_last.append(row)
@@ -105,50 +98,78 @@ portfolio_last_np = np.array(portfolio_last[1:], dtype=float)
 
 
 # 4. 2. 超過リターンの計算
+from amplify import VariableGenerator
+gen = VariableGenerator()
+q = gen.array("Binary", 2146) # 二値変数
+# w = q.sum(axis=1)
+
+
+# 目的関数の定義
+from amplify import BinaryPoly, sum_poly, Poly
 import math
-for i in range(12):
-    # topix_return = (np.array(topix_last[1][i]) - np.array(topix_first[1][i])) / np.array(topix_first[1][i])
-    topix_return = (topix_last_np[0][i] - topix_first_np[0][i]) / topix_first_np[0][i]
-    portfolio_return = 0
-    for j in range(real_cardi):
-        # ここで二値変数q[i]をかける！
-        # print("i :", i, ", j :",j)
-        portfolio_return = portfolio_return + (portfolio_last_np[j][i] - portfolio_first_np[j][i]) * q[j] / portfolio_first_np[j][i]
-    over_return.append(portfolio_return - topix_return)
+Cardi_sum = Poly(0.0)
+print("Poly(Cardi_want)", Poly(Cardi_want))
 
-over_return_ave = np.mean(over_return)
+def setObjective(q, topix_first_np, topix_last_np, real_data_num,portfolio_first_np, portfolio_last_np, Cardi_sum):
+    over_return = []
+    for i in range(12):
+        topix_return = (topix_last_np[0][i] - topix_first_np[0][i]) / topix_first_np[0][i]
+        portfolio_return = Poly(0.0)
+        for j in range(real_data_num):
+            # ここで二値変数q[i]をかける！
+            portfolio_return += (portfolio_last_np[j][i] - portfolio_first_np[j][i]) * q[j] / portfolio_first_np[j][i]
+        over_return.append(portfolio_return - topix_return)
 
-# 目的関数
-mult = 0
-for i in range(len(over_return)):
-    mult = mult + (over_return[i] - over_return_ave) ** 2
-f = mult
-
-# 制約条件
-Cardi_want = 50
-Cardi_sum = 0
-for i in range(Cardi):
+    for i in range(2146):
         Cardi_sum += 1*q[i]
 
-f += 0.05 * (Cardi_want - Cardi_sum) ** 2
+    # Cardi_sum = sum(q)
+    
+    # over_return_ave = np.mean(over_return)
+    # mult = 0
+    # for i in range(len(over_return)):
+    #     mult = mult + (over_return[i] - over_return_ave) ** 2
+    # objective = -mult
+    over_return_ave = sum(over_return) / len(over_return)
+    mult = sum((ret - over_return_ave) ** 2 for ret in over_return)
+    objective = -mult
 
-# 目的関数にルート入れるとバグる、分散の最小化でもいいのかしら
+    return objective
+
+# カーディナリティ制約
+from amplify import equal_to
+# def setConstraint(Cardi_want, Cardi_sum):    
+#     constraint = equal_to(Cardi_sum, float(Cardi_want))
+#     # constraint = equal_to(__init__(Cardi_want), __init__(Cardi_sum))
+#     return constraint
+
+def setConstraint(Cardi_want, Cardi_sum):    
+    return equal_to(Cardi_sum, Cardi_want)
 
 
+# 目的関数と制約条件を足し合わせ、QUBOモデル構築
+# objective, Cardi_sum = setObjective(
+#     q, topix_first_np, topix_last_np, real_data_num,portfolio_first_np, portfolio_last_np, Cardi_sum
+# )
+# constraint = setConstraint(Cardi_want, Cardi_sum)
+objective = setObjective(q, topix_first_np, topix_last_np, real_data_num, portfolio_first_np, portfolio_last_np, Cardi_sum)
+constraint = setConstraint(Cardi_want, Cardi_sum)
 
-from amplify import FixstarsClient
+# 制約式の強さを表す係数
+priority = 0.05
+model = objective
+
+
+from amplify import FixstarsClient, solve
+
 client = FixstarsClient()
 client.token = "AE/VfQDHqAtq9NOTUnJyxWiDTSGa7avMJQe" 
-client.parameters.timeout = 1000
-from amplify import solve
-result = solve(f, client)
+client.parameters.timeout = 99000
+result = solve(model, client)
 
 print(result.best.values)
 # print(result.best.objective)
 print(f"{q} = {q.evaluate(result.best.values)}")
-filtered_result = {str(key).replace('Poly', '').strip('()'): value for key, value in result.best.values.items() if value == 1}
-print(filtered_result)
-
 print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 
 
@@ -156,3 +177,4 @@ print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"実行時間: {execution_time}秒")
+print("Cardi_sum", Cardi_sum)
