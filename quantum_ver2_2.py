@@ -1,7 +1,9 @@
-# 制約条件なし
+# 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 500 # カーディナリティ制約
+Cardi = 500 # データの読み込み数
+Cardi_want = 20 # カーディナリティ制約
+Budget_want = 100000 # 予算制約
 import time
 start_time = time.time()
 
@@ -124,15 +126,25 @@ for i in range(len(over_return)):
     mult = mult + (over_return[i] - over_return_ave) ** 2
 f = mult
 
-# 制約条件
-Cardi_want = 50
+# カーディナリティ制約
 Cardi_sum = 0
-for i in range(Cardi):
-        Cardi_sum += 1*q[i]
-
+for i in range(real_cardi):
+        Cardi_sum += q[i]
 f += 0.05 * (Cardi_want - Cardi_sum) ** 2
 
-# 目的関数にルート入れるとバグる、分散の最小化でもいいのかしら
+# 予算の拡充度制約
+Budget_sum = 0
+for i in range(real_cardi):
+        Budget_sum += portfolio_first_np[i][0] * q[i]
+# print(Budget_sum)
+f += 0.00000001 * (Budget_want - Budget_sum) ** 2
+
+# 取引の流動性制約
+
+
+# 産業の構成割合制約
+
+
 
 
 
@@ -143,11 +155,28 @@ client.parameters.timeout = 1000
 from amplify import solve
 result = solve(f, client)
 
-print(result.best.values)
+# print(result.best.values)
 # print(result.best.objective)
-print(f"{q} = {q.evaluate(result.best.values)}")
+# print(f"{q} = {q.evaluate(result.best.values)}")
 filtered_result = {str(key).replace('Poly', '').strip('()'): value for key, value in result.best.values.items() if value == 1}
 print(filtered_result)
+count_q_equals_one = sum(1 for key, value in result.best.values.items() if value == 1)
+print(f"q[i] = 1 の数: {count_q_equals_one}")
+
+
+Budget_sum = 0
+selected_indices = []
+
+for key, value in result.best.values.items() :
+    if value == 1:
+        index = int(str(key).replace('q_{', '').replace('}', ''))
+        selected_indices.append(index)
+
+for select_i in selected_indices:
+    Budget_sum += portfolio_first_np[select_i][0]
+
+
+print("Budget_sum:", Budget_sum)
 
 print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 
@@ -156,3 +185,9 @@ print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"実行時間: {execution_time}秒")
+
+# sum_bu = 0
+# for i in range(real_cardi):
+#         sum_bu += portfolio_first_np[i][0] * q[i]
+
+# print(sum_bu)

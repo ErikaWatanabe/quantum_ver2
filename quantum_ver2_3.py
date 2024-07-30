@@ -1,8 +1,8 @@
-# 制約条件つき
+# 制約条件を関数からやろうとしたもの
 
 # 1. 変数の初期設定等
 data_num = 100 # 読み込むデータの数
-Cardi_want = 2 # カーディナリティ制約
+Cardi_want = 10 # カーディナリティ制約
 import time
 start_time = time.time()
 
