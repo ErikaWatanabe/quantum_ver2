@@ -126,20 +126,20 @@ for i in range(len(over_return)):
     mult = mult + (over_return[i] - over_return_ave) ** 2
 f = mult
 
-# カーディナリティ制約
+# 1. カーディナリティ制約
 Cardi_sum = 0
 for i in range(real_cardi):
         Cardi_sum += q[i]
 f += 0.05 * (Cardi_want - Cardi_sum) ** 2
 
-# 予算の拡充度制約
+# 2. 予算の拡充度制約
 Budget_sum = 0
 for i in range(real_cardi):
         Budget_sum += portfolio_first_np[i][0] * q[i]
 # print(Budget_sum)
 f += 0.00000001 * (Budget_want - Budget_sum) ** 2
 
-# 取引の流動性制約
+# 3. 取引の流動性制約334
 
 
 # 産業の構成割合制約

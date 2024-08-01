@@ -41,72 +41,14 @@ headers = {'Authorization': 'Bearer {}'.format(idToken)}
 time_point = []
 from_ = "2022-05-21" # 取得できる期間変わるので定期的に更新しないと
 to_ = "2023-04-21"
-code_ = "5844"
+code_ = "7203"
 url = "https://api.jquants.com/v1/prices/daily_quotes"
 res = requests.get(f"{url}?code={code_}&from={from_}&to={to_}", headers=headers)
 data = res.json()
-close_values = [quote["Close"] for quote in data["daily_quotes"]]
+close_values = [quote["Volume"] for quote in data["daily_quotes"]]
+sum_close = 0
 for i in range(len(close_values)):
+    sum_close += close_values[i]
     time_point.append(data["daily_quotes"][i]["Date"])
-print(time_point)
+print(sum_close/len(close_values))
     
-# from datetime import datetime
-# from collections import defaultdict
-# monthly_data = defaultdict(list)
-# for date_str in time_point: # 日付を扱いやすいように辞書型に変換
-#     date = datetime.strptime(date_str, '%Y-%m-%d')
-#     month_key = date.strftime('%Y-%m')
-#     monthly_data[month_key].append(date_str)
-
-# # 3. 3. 月初と月末の株価を2146銘柄分取得、csvファイルに保存
-# # 時間計測
-# import time
-# import os
-# folder_path = f"Cardinality_{Cardi}"
-# os.makedirs(folder_path, exist_ok=True)
-# print(f"フォルダ '{folder_path}' が作成されました。")
-# start_time = time.time()
-
-
-# month_key_list = []
-# data_close_first = defaultdict(list) # 月初の全銘柄の株価を、月をkeyとして格納
-# data_close_last = defaultdict(list) # 月末の全銘柄の株価を、月をkeyとして格納
-# # data_close_first["2022-04"][0]で4月初の0番目の銘柄の株価取得
-
-# for key in monthly_data.keys():
-#     date_first = monthly_data[key][0]
-#     date_last = monthly_data[key][-1] 
-#     month_key_list.append(key)   
-
-#     for i in range(Cardi):
-#     # for i in range(len(code_2146)):
-#         res_first = requests.get(f"{url}?code={code_2146[i]}&date={date_first}", headers=headers)
-#         res_last = requests.get(f"{url}?code={code_2146[i]}&date={date_last}", headers=headers)
-#         data_first = res_first.json()
-#         data_last = res_last.json()
-
-#         if i == 181:
-#             print("code :", code_2146[i])
-#             print("res_first :", res_first)
-#             print("res_last :", res_last)
-#             print(i, "data_first : ", data_first)
-#             print(i, "data_last : ", data_last)
-
-
-#         if i == 182:
-#             print("code :", code_2146[i])
-#             print("res_first :", res_first)
-#             print("res_last :", res_last)
-#             print(i, "data_first : ", data_first)
-#             print(i, "data_last : ", data_last)
-
-#         if i == 183:
-#             print("code :", code_2146[i])
-#             print("res_first :", res_first)
-#             print("res_last :", res_last)
-#             print(i, "data_first : ", data_first)
-#             print(i, "data_last : ", data_last)
-#         data_close_first[key].append(data_first["daily_quotes"][0]["Close"])
-#         data_close_last[key].append(data_last["daily_quotes"][0]["Close"])
-        
-        

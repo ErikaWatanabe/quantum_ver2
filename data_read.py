@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 500 # カーディナリティ制約
+Cardi = 2 # データの読み込み数
 
 
 
@@ -80,6 +80,7 @@ for key in monthly_data.keys():
     print(count)
     # print(next(iter(monthly_data)))
 
+# 月初、月末の株価取得
     for i in range(Cardi):
         res_first = requests.get(f"{url}?code={code_2146[i]}&date={date_first}", headers=headers)
         res_last = requests.get(f"{url}?code={code_2146[i]}&date={date_last}", headers=headers)
@@ -104,14 +105,34 @@ for key in monthly_data.keys():
 
         data_close_first[key].append(data_first["daily_quotes"][0]["Close"])
         data_close_last[key].append(data_last["daily_quotes"][0]["Close"])
-    
+
+# 取引高（Volume）の取得
+real_cardi = Cardi - count
+volume= []
+volume_ave = []
+
+for i in range(real_cardi):
+    res_volume = requests.get(f"{url}?code={code_2146[i]}&from={from_}&to={to_}", headers=headers)
+    data_volume = res_volume.json()
+    volume = [quote["Volume"] for quote in data["daily_quotes"]]
+    volume_sum = 0
+    for j in range(len(volume)):
+        volume_sum += volume[i]
+    volume_ave.append(volume_sum / len(volume))
+# print(volume_ave)
+
+
+# csvファイルに株価、volumeの書き込み
+with open (f"Cardinality_{Cardi}/volume_{Cardi}.csv", "w", newline='') as f:
+    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    writer.writerow(volume_ave)
         
     # print(key, "の株価 : ", data_close_first[key], data_close_last[key])
     
 with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
-    for i in range(Cardi - count):
+    for i in range(real_cardi):
         data_csv = []
         for key in monthly_data.keys():
             data_csv.append(data_close_first[key][i])
@@ -120,7 +141,7 @@ with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
 with open (f"Cardinality_{Cardi}/data_last_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
-    for i in range(Cardi - count):
+    for i in range(real_cardi):
         data_csv = []
         for key in monthly_data.keys():
             data_csv.append(data_close_last[key][i])
