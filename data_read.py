@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 2 # データの読み込み数
+Cardi = 50 # データの読み込み数
 
 
 

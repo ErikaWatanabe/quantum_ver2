@@ -1,9 +1,10 @@
 # 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 500 # データの読み込み数
-Cardi_want = 20 # カーディナリティ制約
+Cardi = 50 # データの読み込み数
+Cardi_want = 10 # カーディナリティ制約
 Budget_want = 100000 # 予算制約
+Volume_want = 23000000 # 流動性制約
 import time
 start_time = time.time()
 
@@ -104,6 +105,13 @@ with open(f"Cardinality_{Cardi}/data_last_{Cardi}.csv", mode='r', encoding='utf-
         portfolio_last.append(row)
 portfolio_last_np = np.array(portfolio_last[1:], dtype=float)
 
+volume_ave = []
+with open(f"Cardinality_{Cardi}/volume_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        volume_ave.append(row)
+volume_ave_np = np.array(volume_ave, dtype=float)
+print(volume_ave_np)
 
 
 # 4. 2. 超過リターンの計算
@@ -139,7 +147,18 @@ for i in range(real_cardi):
 # print(Budget_sum)
 f += 0.00000001 * (Budget_want - Budget_sum) ** 2
 
-# 3. 取引の流動性制約334
+# 3. 取引の流動性制約
+count_volume = 0
+true = True
+false = False
+for i in range(real_cardi):
+    if(volume_ave_np[0][i] >= float(Volume_want)):
+        count_volume += q[i] * true
+    else:
+        count_volume += q[i] * false
+        # print("20万以下 : ", i)
+# print(count_volume)
+f += 0.1 * (Cardi_want - count_volume) ** 2
 
 
 # 産業の構成割合制約
@@ -166,18 +185,24 @@ print(f"q[i] = 1 の数: {count_q_equals_one}")
 
 Budget_sum = 0
 selected_indices = []
+volume_result = []
 
 for key, value in result.best.values.items() :
     if value == 1:
-        index = int(str(key).replace('q_{', '').replace('}', ''))
+        index = str(key).replace('q_', '')
+        if not (index.isdigit()):
+            index = index.replace('{', '').replace('}', '')
+        index = int(index)
         selected_indices.append(index)
+print(selected_indices)
 
 for select_i in selected_indices:
     Budget_sum += portfolio_first_np[select_i][0]
-
+    volume_result.append(volume_ave_np[0][select_i] / 1000)
 
 print("Budget_sum:", Budget_sum)
-
+print("volume_result:", volume_result)
+print("float(Volume_want):", float(Volume_want))
 print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 
 
