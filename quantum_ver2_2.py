@@ -1,10 +1,10 @@
 # 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 50 # データの読み込み数
-Cardi_want = 10 # カーディナリティ制約
-Budget_want = 100000 # 予算制約
-Volume_want = 23000000 # 流動性制約
+Cardi = 200 # データの読み込み数
+Cardi_want = 20 # カーディナリティ制約
+Budget_want = 200000 # 予算制約
+Volume_want = 100000 # 流動性制約
 import time
 start_time = time.time()
 
@@ -138,14 +138,14 @@ f = mult
 Cardi_sum = 0
 for i in range(real_cardi):
         Cardi_sum += q[i]
-f += 0.05 * (Cardi_want - Cardi_sum) ** 2
+f += 0.1 * (Cardi_want - Cardi_sum) ** 2
 
 # 2. 予算の拡充度制約
 Budget_sum = 0
 for i in range(real_cardi):
         Budget_sum += portfolio_first_np[i][0] * q[i]
-# print(Budget_sum)
-f += 0.00000001 * (Budget_want - Budget_sum) ** 2
+
+f += 0.001 * ((Budget_want - Budget_sum) * 1/10000) ** 2
 
 # 3. 取引の流動性制約
 count_volume = 0

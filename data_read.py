@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 50 # データの読み込み数
+Cardi = 200 # データの読み込み数
 
 
 
@@ -114,12 +114,12 @@ volume_ave = []
 for i in range(real_cardi):
     res_volume = requests.get(f"{url}?code={code_2146[i]}&from={from_}&to={to_}", headers=headers)
     data_volume = res_volume.json()
-    volume = [quote["Volume"] for quote in data["daily_quotes"]]
+    volume = [quote["Volume"] for quote in data_volume["daily_quotes"]]
     volume_sum = 0
     for j in range(len(volume)):
-        volume_sum += volume[i]
+        volume_sum += volume[j]
     volume_ave.append(volume_sum / len(volume))
-# print(volume_ave)
+print(volume_ave)
 
 
 # csvファイルに株価、volumeの書き込み
