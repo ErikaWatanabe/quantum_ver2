@@ -1,7 +1,7 @@
 # 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 200 # データの読み込み数
+Cardi = 500 # データの読み込み数
 Cardi_want = 20 # カーディナリティ制約
 Budget_want = 200000 # 予算制約
 Volume_want = 100000 # 流動性制約
@@ -111,7 +111,13 @@ with open(f"Cardinality_{Cardi}/volume_{Cardi}.csv", mode='r', encoding='utf-8')
     for row in csv_reader:
         volume_ave.append(row)
 volume_ave_np = np.array(volume_ave, dtype=float)
-print(volume_ave_np)
+
+sector = []
+with open(f"Cardinality_{Cardi}/sector_{Cardi}.csv", mode='r', encoding='utf-8') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        sector.append(row)
+    # print(sector)
 
 
 # 4. 2. 超過リターンの計算
@@ -157,11 +163,28 @@ for i in range(real_cardi):
     else:
         count_volume += q[i] * false
         # print("20万以下 : ", i)
-# print(count_volume)
 f += 0.1 * (Cardi_want - count_volume) ** 2
 
 
-# 産業の構成割合制約
+# 4. 産業の構成割合制約
+# TOPIXの構成割合を計算
+def add_to_dict(key, dict, value):
+    if key in dict:
+        dict[key] += value
+    else:
+        dict[key] = value
+
+dict_sector_t = {}
+dict_sector_p = {}
+for i in range(real_cardi):
+    add_to_dict(sector[0][i], dict_sector_t, 1)
+    add_to_dict(sector[0][i], dict_sector_p, q[i])
+
+    
+for key in dict_sector_t.keys():
+    sum_sector_p = 0
+    # f += 0.1*(( dict_sector_t[key] / real_cardi ) - ( dict_sector_p[key] / real_cardi ))^2
+
 
 
 

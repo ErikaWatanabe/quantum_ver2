@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 200 # データの読み込み数
+Cardi = 500 # データの読み込み数
 
 
 
@@ -106,12 +106,16 @@ for key in monthly_data.keys():
         data_close_first[key].append(data_first["daily_quotes"][0]["Close"])
         data_close_last[key].append(data_last["daily_quotes"][0]["Close"])
 
-# 取引高（Volume）の取得
+
+# 取引高・産業分野の取得
 real_cardi = Cardi - count
 volume= []
 volume_ave = []
+url_sector = "https://api.jquants.com/v1/listed/info"
+sector_list = []
 
 for i in range(real_cardi):
+    # 取引高（Volume）の取得
     res_volume = requests.get(f"{url}?code={code_2146[i]}&from={from_}&to={to_}", headers=headers)
     data_volume = res_volume.json()
     volume = [quote["Volume"] for quote in data_volume["daily_quotes"]]
@@ -119,7 +123,14 @@ for i in range(real_cardi):
     for j in range(len(volume)):
         volume_sum += volume[j]
     volume_ave.append(volume_sum / len(volume))
-print(volume_ave)
+
+    # 産業分野（Sector）の取得
+    res_sector = requests.get(f"{url_sector}?code={code_2146[i]}&date={from_}", headers=headers)
+    data_sector = res_sector.json()
+    sector = [quote["Sector17CodeName"] for quote in data_sector["info"]]
+    sector_list.append(sector[0])
+
+print(sector_list)
 
 
 # csvファイルに株価、volumeの書き込み
@@ -128,6 +139,10 @@ with open (f"Cardinality_{Cardi}/volume_{Cardi}.csv", "w", newline='') as f:
     writer.writerow(volume_ave)
         
     # print(key, "の株価 : ", data_close_first[key], data_close_last[key])
+
+with open (f"Cardinality_{Cardi}/sector_{Cardi}.csv", "w", newline='', encoding='utf-8') as f:
+    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    writer.writerow(sector_list)
     
 with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
