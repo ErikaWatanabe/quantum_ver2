@@ -2,8 +2,8 @@
 
 # 1. 変数の初期設定等
 Cardi = 500 # データの読み込み数
-Cardi_want = 20 # カーディナリティ制約
-Budget_want = 200000 # 予算制約
+Cardi_want = 50 # カーディナリティ制約
+Budget_want = 500000 # 予算制約
 Volume_want = 100000 # 流動性制約
 import time
 start_time = time.time()
@@ -167,7 +167,6 @@ f += 0.1 * (Cardi_want - count_volume) ** 2
 
 
 # 4. 産業の構成割合制約
-# TOPIXの構成割合を計算
 def add_to_dict(key, dict, value):
     if key in dict:
         dict[key] += value
@@ -180,10 +179,8 @@ for i in range(real_cardi):
     add_to_dict(sector[0][i], dict_sector_t, 1)
     add_to_dict(sector[0][i], dict_sector_p, q[i])
 
-    
 for key in dict_sector_t.keys():
-    sum_sector_p = 0
-    # f += 0.1*(( dict_sector_t[key] / real_cardi ) - ( dict_sector_p[key] / real_cardi ))^2
+    f += 0.001*(( dict_sector_t[key] / real_cardi ) - ( dict_sector_p[key] / real_cardi )) ** 2
 
 
 
@@ -201,7 +198,7 @@ result = solve(f, client)
 # print(result.best.objective)
 # print(f"{q} = {q.evaluate(result.best.values)}")
 filtered_result = {str(key).replace('Poly', '').strip('()'): value for key, value in result.best.values.items() if value == 1}
-print(filtered_result)
+# print(filtered_result)
 count_q_equals_one = sum(1 for key, value in result.best.values.items() if value == 1)
 print(f"q[i] = 1 の数: {count_q_equals_one}")
 
@@ -219,12 +216,29 @@ for key, value in result.best.values.items() :
         selected_indices.append(index)
 print(selected_indices)
 
+# 産業分野の割合、予算合計、流動性の結果計算
+dict_sector_p_res = {}
 for select_i in selected_indices:
     Budget_sum += portfolio_first_np[select_i][0]
     volume_result.append(volume_ave_np[0][select_i] / 1000)
+    add_to_dict(sector[0][select_i], dict_sector_p_res, 1)
+
+import unicodedata
+def width_adjusted_string(s, width):
+    count = 0
+    for char in s:
+        if unicodedata.east_asian_width(char) in 'WF':  # 全角
+            count += 2
+        else:  # 半角
+            count += 1
+    return s + ' ' * (width - count)
+for key in dict_sector_p_res.keys():
+    adjusted_key = width_adjusted_string(str(key), 25)
+    print(f"{adjusted_key} || TOPIX : {dict_sector_t[key] / real_cardi:.2f} | Portfolio : {dict_sector_p_res[key] / count_q_equals_one:.2f}")
+
 
 print("Budget_sum:", Budget_sum)
-print("volume_result:", volume_result)
+# print("volume_result:", volume_result)
 print("float(Volume_want):", float(Volume_want))
 print("トラッキングエラー : ", math.sqrt(result.best.objective) * 100)
 
