@@ -18,13 +18,13 @@ with open("topixweight_j.csv") as file:
 # データ以外の記述をリストから削除、0～2145までがデータ
 lst.pop(0)
 last_data = 2145
-code_2146 = []
+code_2022 = []
 for i in range(18):
     lst.pop( last_data + 1 )
 
 for i in range(len(lst)):
-    code_2146.append(lst[i][2])
-# print(code_2146) # 2146個の銘柄コード
+    code_2022.append(lst[i][2])
+# print(code_2022) # 2146個の銘柄コード
 
 
 
@@ -42,8 +42,8 @@ headers = {'Authorization': 'Bearer {}'.format(idToken)}
 
 # 3. 2. time_pointを先に取得
 time_point = []
-from_ = "2022-05-21" # 取得できる期間変わるので定期的に更新しないと
-to_ = "2023-04-21"
+from_ = "2022-04-01" # 取得できる期間変わるので定期的に更新しないと
+to_ = "2023-03-31"
 code_ = "7203"
 url = "https://api.jquants.com/v1/prices/daily_quotes"
 res = requests.get(f"{url}?code={code_}&from={from_}&to={to_}", headers=headers)
@@ -189,7 +189,7 @@ for key in dict_sector_t.keys():
 
 from amplify import FixstarsClient
 client = FixstarsClient()
-client.token = "AE/VfQDHqAtq9NOTUnJyxWiDTSGa7avMJQe" 
+client.token = "AE/4lBXnJAF4R5QTfHDa9pK1rmv0Fa6G7H8" 
 client.parameters.timeout = 1000
 from amplify import solve
 result = solve(f, client)
