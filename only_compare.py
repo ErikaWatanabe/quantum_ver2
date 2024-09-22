@@ -1,9 +1,9 @@
 # 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 700 # データの読み込み数
-Cardi_want = 100 # カーディナリティ制約
-Budget_want = 900000 # 予算制約
+Cardi = 500 # データの読み込み数
+Cardi_want = 50 # カーディナリティ制約
+Budget_want = 500000 # 予算制約
 Volume_want = 100000 # 流動性制約
 import time
 start_time = time.time()
@@ -152,7 +152,6 @@ with open(f"Cardinality_{Cardi}/code_{Cardi}_23.csv", mode='r', encoding='utf-8'
 code_2023_np = np.array(code_2023, dtype=float)
 
 
-
 # 4. 2. 超過リターンの計算
 import math
 for i in range(12):
@@ -171,7 +170,7 @@ over_return_ave = np.mean(over_return)
 mult = 0
 for i in range(len(over_return)):
     mult = mult + (over_return[i] - over_return_ave) ** 2
-f = mult / ( Cardi_want - 1 )
+f = mult
 
 # 1. カーディナリティ制約
 Cardi_sum = 0
@@ -255,52 +254,25 @@ for item in selected_indices:
     for i in range(len(code_2023_np[0])):
         if(code_2022_np[0][item] == code_2023_np[0][i]):
             selected_indices_2023.append(i)
-# print("selected_indices", len(selected_indices))
-# print("selected_indices_2023", len(selected_indices_2023))
-
 
 over_return_23 = []
-pr_array = []
-tp_array = []
 for i in range(12):
     topix_return_23 = (topix_last_np_23[0][i] - topix_first_np_23[0][i]) / topix_first_np_23[0][i]
     portfolio_return_23 = 0
-    pr = 0
     for item in selected_indices_2023:
-        pr = pr + portfolio_first_np_23[item][i]
         portfolio_return_23 = portfolio_return_23 + (portfolio_last_np_23[item][i] - portfolio_first_np_23[item][i]) / portfolio_first_np_23[item][i]
     over_return_23.append(portfolio_return_23 - topix_return_23)
-    pr_array.append(pr)
-    tp_array.append(topix_first_np_23[0][i])
 
 over_return_ave_23 = np.mean(over_return_23)
 
 mult_23 = 0
 for i in range(len(over_return_23)):
     mult_23 = mult_23 + (over_return_23[i] - over_return_ave_23) ** 2
-f_23 = mult_23 / (Cardi_want - 1)
-
-# グラフ書いてみる
-import matplotlib.pyplot as plt
-import japanize_matplotlib
-from matplotlib.ticker import MaxNLocator
-japanize_matplotlib.japanize()
-
-# 4. 2. TOPIXのプロット
-fig, ax1 = plt.subplots()
-ax1.plot(tp_array, label='TOPIX', color='blue')
-ax1.set_ylabel('TOPIX', color='blue')
-ax1.tick_params(axis='y', labelcolor='blue')
-# ax1.xaxis.set_major_locator(MaxNLocator(nbins=5))
-# plt.xticks(rotation=30)
-
-# 4. 3. Portfolioのプロット
-ax2 = ax1.twinx()
-ax2.plot(pr_array, label='Portfolio', color='green')
-ax2.set_ylabel('ポートフォリオ', color='green')
-ax2.tick_params(axis='y', labelcolor='green')
-
-plt.show()
+f_23 = mult_23
+print(f_23)
+print("トラッキングエラー(2023) : ", math.sqrt(f_23) * 100)
+print("len(code_2022_np)", len(code_2022_np[0]))
+print("len(code_2023_np)", len(code_2023_np[0]))
 
 
 # 産業分野の割合、予算合計、流動性の結果計算
@@ -321,15 +293,13 @@ def width_adjusted_string(s, width):
     return s + ' ' * (width - count)
 for key in dict_sector_p_res.keys():
     adjusted_key = width_adjusted_string(str(key), 25)
-    # print(f"{adjusted_key} || TOPIX : {dict_sector_t[key] / real_cardi:.2f} | Portfolio : {dict_sector_p_res[key] / count_q_equals_one:.2f}")
+    print(f"{adjusted_key} || TOPIX : {dict_sector_t[key] / real_cardi:.2f} | Portfolio : {dict_sector_p_res[key] / count_q_equals_one:.2f}")
 
 
 print("Budget_sum:", Budget_sum)
 # print("volume_result:", volume_result)
 print("float(Volume_want):", float(Volume_want))
-print("----------------------------------------------------")
 print("トラッキングエラー(2022) : ", math.sqrt(result.best.objective) * 100)
-print("トラッキングエラー(2023) : ", math.sqrt(f_23) * 100)
 
 
 # 実行時間表示

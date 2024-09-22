@@ -3,7 +3,7 @@
 from amplify import VariableGenerator
 gen = VariableGenerator()
 q = gen.array("Binary", 2146) # 二値変数
-Cardi = 500 # データの読み込み数
+Cardi = 700 # データの読み込み数
 
 
 
@@ -178,13 +178,15 @@ for key in monthly_data_23.keys():
 
 
 
-# 取引高・産業分野の取得
+# 取引高・産業分野・銘柄コードの取得
 real_cardi = Cardi - count
 real_cardi_23 = Cardi - count_23
 volume= []
 volume_ave = []
 url_sector = "https://api.jquants.com/v1/listed/info"
 sector_list = []
+code_list = []
+code_list_23 = []
 
 for i in range(real_cardi):
     # 取引高（Volume）の取得
@@ -193,7 +195,13 @@ for i in range(real_cardi):
     volume = [quote["Volume"] for quote in data_volume["daily_quotes"]]
     volume_sum = 0
     for j in range(len(volume)):
-        volume_sum += volume[j]
+        if volume[j] is not None:
+            volume_sum += volume[j]
+        else:
+            print(code_2022[i], "のvolumeでNoneあり、銘柄コードを削除します")
+            code_2022.pop(j)
+            real_cardi = real_cardi - 1
+
     volume_ave.append(volume_sum / len(volume))
 
     # 産業分野（Sector）の取得
@@ -202,20 +210,30 @@ for i in range(real_cardi):
     sector = [quote["Sector17CodeName"] for quote in data_sector["info"]]
     sector_list.append(sector[0])
 
-print(sector_list)
+    # 銘柄コードの取得
+    code_list.append(code_2022[i])
+
+for i in range(real_cardi_23):
+    code_list_23.append(code_2023[i])
 
 
 # csvファイルに株価、volumeの書き込み
 with open (f"Cardinality_{Cardi}/volume_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(volume_ave)
-        
-    # print(key, "の株価 : ", data_close_first[key], data_close_last[key])
 
 with open (f"Cardinality_{Cardi}/sector_{Cardi}.csv", "w", newline='', encoding='utf-8') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(sector_list)
     
+with open (f"Cardinality_{Cardi}/code_{Cardi}.csv", "w", newline='', encoding='utf-8') as f:
+    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    writer.writerow(code_list)
+
+with open (f"Cardinality_{Cardi}/code_{Cardi}_23.csv", "w", newline='', encoding='utf-8') as f:
+    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    writer.writerow(code_list_23)
+
 with open (f"Cardinality_{Cardi}/data_first_{Cardi}.csv", "w", newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(month_key_list)
