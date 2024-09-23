@@ -1,9 +1,9 @@
 # 制約条件をコスト関数に入れるもの、()^2の形で
 
 # 1. 変数の初期設定等
-Cardi = 700 # データの読み込み数
-Cardi_want = 100 # カーディナリティ制約
-Budget_want = 900000 # 予算制約
+Cardi = 2000 # データの読み込み数
+Cardi_want = 200 # カーディナリティ制約
+Budget_want = 2000000 # 予算制約
 Volume_want = 100000 # 流動性制約
 import time
 start_time = time.time()
@@ -184,7 +184,7 @@ Budget_sum = 0
 for i in range(real_cardi):
         Budget_sum += portfolio_first_np[i][0] * q[i]
 
-f += 0.001 * ((Budget_want - Budget_sum) * 1/10000) ** 2
+# f += 0.001 * ((Budget_want - Budget_sum) * 1/10000) ** 2
 
 # 3. 取引の流動性制約
 count_volume = 0
@@ -196,7 +196,7 @@ for i in range(real_cardi):
     else:
         count_volume += q[i] * false
         # print("20万以下 : ", i)
-f += 0.1 * (Cardi_want - count_volume) ** 2
+# f += 0.1 * (Cardi_want - count_volume) ** 2
 
 
 # 4. 産業の構成割合制約
@@ -212,8 +212,8 @@ for i in range(real_cardi):
     add_to_dict(sector[0][i], dict_sector_t, 1)
     add_to_dict(sector[0][i], dict_sector_p, q[i])
 
-for key in dict_sector_t.keys():
-    f += 0.001*(( dict_sector_t[key] / real_cardi ) - ( dict_sector_p[key] / real_cardi )) ** 2
+# for key in dict_sector_t.keys():
+#     f += 0.001*(( dict_sector_t[key] / real_cardi ) - ( dict_sector_p[key] / real_cardi )) ** 2
 
 
 
@@ -250,7 +250,17 @@ for key, value in result.best.values.items() :
 print(selected_indices)
 
 # 2023年度のトラッキングエラー計算
+# グラフ用に2022のポイント格納
 selected_indices_2023 = []
+pr_array = []
+tp_array = []
+for i in range(12):
+    pr = 0
+    for item in selected_indices:
+        pr = pr + portfolio_first_np[item][i]
+    pr_array.append(pr)
+    tp_array.append(topix_first_np[0][i])
+
 for item in selected_indices:
     for i in range(len(code_2023_np[0])):
         if(code_2022_np[0][item] == code_2023_np[0][i]):
@@ -260,8 +270,8 @@ for item in selected_indices:
 
 
 over_return_23 = []
-pr_array = []
-tp_array = []
+pr_array_23 = []
+tp_array_23 = []
 for i in range(12):
     topix_return_23 = (topix_last_np_23[0][i] - topix_first_np_23[0][i]) / topix_first_np_23[0][i]
     portfolio_return_23 = 0
@@ -270,8 +280,8 @@ for i in range(12):
         pr = pr + portfolio_first_np_23[item][i]
         portfolio_return_23 = portfolio_return_23 + (portfolio_last_np_23[item][i] - portfolio_first_np_23[item][i]) / portfolio_first_np_23[item][i]
     over_return_23.append(portfolio_return_23 - topix_return_23)
-    pr_array.append(pr)
-    tp_array.append(topix_first_np_23[0][i])
+    pr_array_23.append(pr)
+    tp_array_23.append(topix_first_np_23[0][i])
 
 over_return_ave_23 = np.mean(over_return_23)
 
@@ -280,27 +290,6 @@ for i in range(len(over_return_23)):
     mult_23 = mult_23 + (over_return_23[i] - over_return_ave_23) ** 2
 f_23 = mult_23 / (Cardi_want - 1)
 
-# グラフ書いてみる
-import matplotlib.pyplot as plt
-import japanize_matplotlib
-from matplotlib.ticker import MaxNLocator
-japanize_matplotlib.japanize()
-
-# 4. 2. TOPIXのプロット
-fig, ax1 = plt.subplots()
-ax1.plot(tp_array, label='TOPIX', color='blue')
-ax1.set_ylabel('TOPIX', color='blue')
-ax1.tick_params(axis='y', labelcolor='blue')
-# ax1.xaxis.set_major_locator(MaxNLocator(nbins=5))
-# plt.xticks(rotation=30)
-
-# 4. 3. Portfolioのプロット
-ax2 = ax1.twinx()
-ax2.plot(pr_array, label='Portfolio', color='green')
-ax2.set_ylabel('ポートフォリオ', color='green')
-ax2.tick_params(axis='y', labelcolor='green')
-
-plt.show()
 
 
 # 産業分野の割合、予算合計、流動性の結果計算
@@ -331,14 +320,54 @@ print("----------------------------------------------------")
 print("トラッキングエラー(2022) : ", math.sqrt(result.best.objective) * 100)
 print("トラッキングエラー(2023) : ", math.sqrt(f_23) * 100)
 
-
 # 実行時間表示
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"実行時間: {execution_time}秒")
 
-# sum_bu = 0
-# for i in range(real_cardi):
-#         sum_bu += portfolio_first_np[i][0] * q[i]
 
-# print(sum_bu)
+# グラフ書いてみる
+import matplotlib.pyplot as plt
+import japanize_matplotlib
+from matplotlib.ticker import MaxNLocator
+japanize_matplotlib.japanize()
+
+
+# fig1, ax1 = plt.subplots()
+# ax1.set_title('2022年のTOPIXとポートフォリオの比較')
+# ax1.plot(tp_array, label='TOPIX', color='blue')
+# ax1.set_ylabel('TOPIX', color='blue')
+# ax1.tick_params(axis='y', labelcolor='blue')
+# ax2 = ax1.twinx()
+# ax2.plot(pr_array, label='Portfolio', color='green')
+# ax2.set_ylabel('ポートフォリオ', color='green')
+# ax2.tick_params(axis='y', labelcolor='green')
+
+
+# fig2, ax1 = plt.subplots()
+# ax1.set_title('2023年のTOPIXとポートフォリオの比較')
+# ax1.plot(tp_array_23, label='TOPIX', color='blue')
+# ax1.set_ylabel('TOPIX', color='blue')
+# ax1.tick_params(axis='y', labelcolor='blue')
+# ax2 = ax1.twinx()
+# ax2.plot(pr_array_23, label='Portfolio', color='green')
+# ax2.set_ylabel('ポートフォリオ', color='green')
+# ax2.tick_params(axis='y', labelcolor='green')
+
+pr_sum = pr_array + pr_array_23
+tp_sum = tp_array + tp_array_23
+fig3, ax1 = plt.subplots()
+ax1.set_title('2022年～2023年')
+ax1.plot(tp_sum, label='TOPIX', color='blue')
+ax1.set_ylabel('TOPIX', color='blue')
+ax1.tick_params(axis='y', labelcolor='blue')
+ax2 = ax1.twinx()
+ax2.plot(pr_sum, label='Portfolio', color='green')
+ax2.set_ylabel('ポートフォリオ', color='green')
+ax2.tick_params(axis='y', labelcolor='green')
+
+plt.show()
+# print("tp_array", tp_array)
+# print("tp_array_23", tp_array_23)
+
+
